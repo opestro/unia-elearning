@@ -37,13 +37,14 @@ bot.on('message', async (msg) => {
                     content: text,
                 },);
             // Send the user message to OpenAI API
-            const run = await openai.beta.threads.runs.createAndPoll(thread, {
+            const run = await openai.beta.threads.runs.createAndPoll(thread.id, {
                 assistant_id: 'asst_5905oWhC2IYlpzp0dMDJicjX'
             });
+            console.log(run)
             const OpnApiMessages = await openai.beta.threads.messages.list(
                 run.thread_id)
             for (const message of OpnApiMessages.data) {
-                if (message.content[0].type == 'text') {
+                if (message.content[0].type == 'text' && message.role =='assistant') {
                     console.log(`message : ${message.role} > ${message.content[0].text.value}`);
                     console.log(text)
                     // Extract the response from OpenAI
