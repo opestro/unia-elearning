@@ -20,7 +20,7 @@ const openai = new OpenAI({
 });
 
 // Google Sheets Setup
-const credentials = require('./credentials.json');  // Load your Google API credentials
+const credentials = require('./artyumm-649c9b83c537.json');  // Load your Google API credentials
 const SCOPES = ['https://www.googleapis.com/auth/spreadsheets'];
 const auth = new google.auth.GoogleAuth({
     credentials: credentials,
@@ -30,25 +30,72 @@ const sheets = google.sheets({ version: 'v4', auth });
 const SPREADSHEET_ID = '1Arcrrz40ery7ck_7vXfStczZtrihOyVnmOGSBbI1H88';
 const SHEET_NAME = 'Data';  // Your Google Sheet tab name
 
-// Function to add user to Google Sheets
-async function addUserToGoogleSheet(chatId, username, firstName, lastName) {
+// Function to get all rows from Google Sheets
+async function getUsersFromGoogleSheet() {
     try {
-        const date = new Date().toLocaleString(); // Timestamp
-        const values = [[chatId, username, firstName, lastName, date]]; // Data to insert
-
-        const resource = {
-            values,
-        };
-
-        await sheets.spreadsheets.values.append({
+        const response = await sheets.spreadsheets.values.get({
             spreadsheetId: SPREADSHEET_ID,
-            range: `${SHEET_NAME}!A:E`,
-            valueInputOption: 'USER_ENTERED',
-            resource,
+            range: `${SHEET_NAME}!A:F`,  // Check all columns (chatId, username, firstName, lastName, lastMessageDate, messageCount)
         });
-        console.log('User added to Google Sheets successfully.');
+
+        return response.data.values || [];
     } catch (error) {
-        console.error('Error adding user to Google Sheets:', error);
+        console.error('Error fetching users from Google Sheets:', error);
+        return [];
+    }
+}
+
+// Function to add or update user in Google Sheets
+async function addOrUpdateUserInGoogleSheet(chatId, username, firstName, lastName) {
+    try {
+        // Get all users
+        const rows = await getUsersFromGoogleSheet();
+
+        // Look for the user by chatId
+        let userRow = null;
+        let userIndex = -1;
+        rows.forEach((row, index) => {
+            if (row[0] == chatId) {
+                userRow = row;
+                userIndex = index + 1;  // Sheet rows are 1-indexed
+            }
+        });
+
+        const date = new Date().toLocaleString(); // Timestamp
+        if (userRow) {
+            // If user exists, update the message count and last message date
+            const currentCount = parseInt(userRow[5]) || 0;  // Message count is in column F (index 5)
+            const updatedCount = currentCount + 1;
+
+            const resource = {
+                values: [[date, updatedCount]],  // Update last message date and message count
+            };
+
+            await sheets.spreadsheets.values.update({
+                spreadsheetId: SPREADSHEET_ID,
+                range: `${SHEET_NAME}!E${userIndex}:F${userIndex}`,  // Update the row with lastMessageDate (E) and messageCount (F)
+                valueInputOption: 'USER_ENTERED',
+                resource,
+            });
+            console.log('User updated in Google Sheets successfully.');
+        } else {
+            // If user doesn't exist, add a new row
+            const values = [[chatId, username, firstName, lastName, date, 1]];  // Start message count at 1
+
+            const resource = {
+                values,
+            };
+
+            await sheets.spreadsheets.values.append({
+                spreadsheetId: SPREADSHEET_ID,
+                range: `${SHEET_NAME}!A:F`,
+                valueInputOption: 'USER_ENTERED',
+                resource,
+            });
+            console.log('User added to Google Sheets successfully.');
+        }
+    } catch (error) {
+        console.error('Error adding/updating user in Google Sheets:', error);
     }
 }
 
@@ -60,8 +107,8 @@ bot.on('message', async (msg) => {
     const firstName = msg.chat.first_name || '';
     const lastName = msg.chat.last_name || '';
 
-    // Add user details to Google Sheets
-    addUserToGoogleSheet(chatId, username, firstName, lastName);
+    // Add or update user details in Google Sheets
+    await addOrUpdateUserInGoogleSheet(chatId, username, firstName, lastName);
 
     const thread = await openai.beta.threads.create();
     
@@ -70,11 +117,10 @@ bot.on('message', async (msg) => {
         bot.sendMessage(chatId, 'Welcome to the AI-powered chatbot! How can I assist you today?');
     } else {
         try {
-            const createMessage = await openai.beta.threads.messages.create(thread.id,
-                {
-                    role: 'user',
-                    content: text,
-                });
+            const createMessage = await openai.beta.threads.messages.create(thread.id, {
+                role: 'user',
+                content: text,
+            });
             const run = await openai.beta.threads.runs.createAndPoll(thread.id, {
                 assistant_id: 'asst_5905oWhC2IYlpzp0dMDJicjX'
             });
