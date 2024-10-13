@@ -20,7 +20,7 @@ const openai = new OpenAI({
 });
 
 // Google Sheets Setup
-const credentials = require('./artyumm-649c9b83c537.json');  // Load your Google API credentials
+const credentials = require('./gsheetApi.json');  // Load your Google API credentials
 const SCOPES = ['https://www.googleapis.com/auth/spreadsheets'];
 const auth = new google.auth.GoogleAuth({
     credentials: credentials,

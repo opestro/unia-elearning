@@ -1,0 +1,13 @@
+{
+  "type": "service_account",
+  "project_id": "artyumm",
+  "private_key_id": "fbf06900dd5a3ce1338463b6b04796a920502ff3",
+  "private_key": "-----BEGIN PRIVATE KEY-----\nMIIEvAIBADANBgkqhkiG9w0BAQEFAASCBKYwggSiAgEAAoIBAQC1pde6J8pMsu/4\nAVdlH66UnjbLZq+YjJCPkzcIru/adj+uQ3cKgd4A3Z1YqT7bLuELSAOdiIL1PqTF\nRF3R25m8MjtB3+9s29GIfEtffIKp4NVypmubTPy3hCWpZYQhEm1LY71P1o1A9kE2\naFx9oxE2cENbAhcW3zqLtUwLL7J9EseQRDzP8yjDytYGgO5Db3Ji8bIVRvpbMvBz\n41oHrdv7aGl5zILIkjlGLXgELRWK3HPApBTsFk7ZhF2ys/JWK9LkJRfr3IwCH2Eg\n2fscHrEIguRRTxp8koxymcb/y3+TRJcXhUltMjTTu8v1JEc2j1xiCJI3jERjq0IC\nf5I9IgUZAgMBAAECggEAEOKVpwxD1dVcUSVuxkunotECLu4grIGEfpQkrX31dc1A\nJibHTga8aEAxfChfW2iEKtRK4b3qznlAP8YXIobTR5czwu/aBbh5RcKoDvw3+SqZ\nLMsjfZAufbCe/5wcKCbaWgOveVhsUPmTHkedMWCTHQhaen87PjkJ7CqyIugQI2gP\nMk3Wm8lFHT4SsVTDPlZxSM9J7X0cwyBsR4pQF0otNirDwg+09LqpEzXowS7T+xz2\n/HvUjteFXj1rCvVWVESslmURuT7nC4QzZfgca33HkTQnM0Vw48tMJeeaLp0+FdXw\nUJuQjz4wBo6Fhf4TrV57XSgD50iS7cgqWLJ5zccCAQKBgQDuU09id6P/M6LClxEs\neQ3udMliPH/+hCn52rJ6NBkadlYKvSU9o5iUN/OhwhZPDrJS4jZj6HbLkP5TS3oC\nVEQNWrD8RtAttB7lwBkdwatpJjNkhDJVkMI9xy03tWCKQsl188JIPuvLqZitsIRd\nTxYWJnMOF4WKaP1ON6sqxLL08QKBgQDDHn0ijhpYL7UbBjxMKnUHk117LmAEvRl2\nAvpty2rhcTz73Z8TNB6Mb5eh2joxefCNutfhT8OkqLi/7IFSRa/uFegVqhCO8u3e\noKXetvmfq1tqpWqWegJmfN+yfw3OsUylfK+gE0PrkhPRmQW0pKbLtfqpTWPsTpgY\nZkcapJtyqQKBgHOPjfSvEqRSQ1+bpMYtxKWVl3i84UtmhnwSoWxECtAcBUibwo0K\n4JcuMkKDPBIFjE5IRhtXwxKeMdPtyzGJ7p2TFjKdm6AtsLWy2frlx9nqngzlVQrM\ncINIKxLSLgecrtc05UXmzKsqh0/hQa2FBa6j4jI5EZW1pu3gbG0Gh8fhAoGAZihr\nahEut+dakiikn1hHZ8z/T8RLH5AGaaRLi/rKHfkU7eXuKLbMG8k9gc9pUog+q2Yd\nK2mAzJBOEqZ4WyQDZctwdQ9SlhWY90vzLHVuouur9F1hPiHpadGNqb4d848eyzJK\nHayYjhkwaTgOJbNjZRsFf2j2nT3VIklChy+R9+kCgYB1vCwouR/EqSB2flfLths8\nZQnTKW9QCpHM7OQr/RKm/KZB62F5SPkSUCa6VUoDkSfIrap7wPfarWocs0+HYAXz\nr7m1FTiYusj8xr9zWSgQwAdZaf2qUA0RkdybD3P6OiJvIeDj0fEtCCTG6wibnQsI\nC4Yt3M2VB4y6qhfP8ZT85g==\n-----END PRIVATE KEY-----\n",
+  "client_email": "uniabot@artyumm.iam.gserviceaccount.com",
+  "client_id": "103932737624880503345",
+  "auth_uri": "https://accounts.google.com/o/oauth2/auth",
+  "token_uri": "https://oauth2.googleapis.com/token",
+  "auth_provider_x509_cert_url": "https://www.googleapis.com/oauth2/v1/certs",
+  "client_x509_cert_url": "https://www.googleapis.com/robot/v1/metadata/x509/uniabot%40artyumm.iam.gserviceaccount.com",
+  "universe_domain": "googleapis.com"
+}
