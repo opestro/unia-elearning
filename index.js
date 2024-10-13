@@ -23,6 +23,7 @@ const openai = new OpenAI({
 // Telegram Bot Webhook Setup
 bot.on('message', async (msg) => {
     const chatId = msg.chat.id;
+    console.log(msg.chat.id)
     const text = msg.text;
     const thread = await openai.beta.threads.create();
     // If user types /start, send a welcome message
