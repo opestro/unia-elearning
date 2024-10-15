@@ -2,12 +2,10 @@ const express = require('express');
 const bodyParser = require('body-parser');
 const TelegramBot = require('node-telegram-bot-api');
 const { Configuration, OpenAI } = require('openai');
-const { google } = require('googleapis'); // Google Sheets API
+const PocketBase = require('pocketbase/cjs');  // Import PocketBase
 require('dotenv').config();  // For environment variables
 
 const app = express();
-
-// Parse incoming requests
 app.use(bodyParser.json());
 
 // Setup Telegram and OpenAI APIs
@@ -19,86 +17,56 @@ const openai = new OpenAI({
     apiKey: OPENAI_API_KEY,
 });
 
-// Google Sheets Setup
-const credentials = require('./gsheetApi.json');  // Load your Google API credentials
-const SCOPES = ['https://www.googleapis.com/auth/spreadsheets'];
-const auth = new google.auth.GoogleAuth({
-    credentials: credentials,
-    scopes: SCOPES,
-});
-const sheets = google.sheets({ version: 'v4', auth });
-const SPREADSHEET_ID = '1Arcrrz40ery7ck_7vXfStczZtrihOyVnmOGSBbI1H88';
-const SHEET_NAME = 'Data';  // Your Google Sheet tab name
+// Initialize PocketBase
+const pb = new PocketBase('https://unia-pb.nestgit.com'); // Change URL if necessary
 
-// Function to get all rows from Google Sheets
-async function getUsersFromGoogleSheet() {
+// Function to add or update user in PocketBase
+// Function to add or update user in PocketBase
+// Function to add or update user in PocketBase
+async function addOrUpdateUserInPocketBase(chatId, username, firstName, lastName, newMessage, threadId) {
     try {
-        const response = await sheets.spreadsheets.values.get({
-            spreadsheetId: SPREADSHEET_ID,
-            range: `${SHEET_NAME}!A:F`,  // Check all columns (chatId, username, firstName, lastName, lastMessageDate, messageCount)
-        });
-
-        return response.data.values || [];
-    } catch (error) {
-        console.error('Error fetching users from Google Sheets:', error);
-        return [];
-    }
-}
-
-// Function to add or update user in Google Sheets
-async function addOrUpdateUserInGoogleSheet(chatId, username, firstName, lastName) {
-    try {
-        // Get all users
-        const rows = await getUsersFromGoogleSheet();
-
-        // Look for the user by chatId
-        let userRow = null;
-        let userIndex = -1;
-        rows.forEach((row, index) => {
-            if (row[0] == chatId) {
-                userRow = row;
-                userIndex = index + 1;  // Sheet rows are 1-indexed
-            }
+        // Check if user exists based on chatId
+        const existingRecords = await pb.collection('threads').getFullList({
+            filter: `telegram_chat_id="${chatId}"`
         });
 
         const date = new Date().toLocaleString(); // Timestamp
-        if (userRow) {
-            // If user exists, update the message count and last message date
-            const currentCount = parseInt(userRow[5]) || 0;  // Message count is in column F (index 5)
-            const updatedCount = currentCount + 1;
 
-            const resource = {
-                values: [[date, updatedCount]],  // Update last message date and message count
-            };
+        if (existingRecords.length > 0) {
+            // If user exists, update the message count, chat history, and last message date
+            const userRecord = existingRecords[0];
+            const updatedCount = (userRecord.messages_counter || 0) + 1;
 
-            await sheets.spreadsheets.values.update({
-                spreadsheetId: SPREADSHEET_ID,
-                range: `${SHEET_NAME}!E${userIndex}:F${userIndex}`,  // Update the row with lastMessageDate (E) and messageCount (F)
-                valueInputOption: 'USER_ENTERED',
-                resource,
+            // Append the new message to the existing chat history
+            const updatedChatHistory = `${userRecord.chat_history}\n[${date}] ${newMessage}`;
+
+            await pb.collection('threads').update(userRecord.id, {
+                chat_history: updatedChatHistory,  // Append new message to chat history
+                messages_counter: updatedCount,
+                updated_at: date,
+                thread_id: threadId || userRecord.thread_id,  // Ensure thread ID is stored/updated
             });
-            console.log('User updated in Google Sheets successfully.');
+            console.log('User updated in PocketBase successfully.');
         } else {
-            // If user doesn't exist, add a new row
-            const values = [[chatId, username, firstName, lastName, date, 1]];  // Start message count at 1
-
-            const resource = {
-                values,
-            };
-
-            await sheets.spreadsheets.values.append({
-                spreadsheetId: SPREADSHEET_ID,
-                range: `${SHEET_NAME}!A:F`,
-                valueInputOption: 'USER_ENTERED',
-                resource,
+            // If user doesn't exist, create a new record
+            await pb.collection('threads').create({
+                full_name: `${firstName} ${lastName}`,
+                thread_id: threadId,  // Store the thread ID when creating the user record
+                telegram_chat_id: chatId,
+                chat_history: `[${date}] ${newMessage}`,  // Initialize chat history with the new message
+                messages_counter: 1,
+                created_at: date,
             });
-            console.log('User added to Google Sheets successfully.');
+            console.log('User added to PocketBase successfully.');
         }
     } catch (error) {
-        console.error('Error adding/updating user in Google Sheets:', error);
+        console.error('Error adding/updating user in PocketBase:', error);
     }
 }
 
+
+// Telegram Bot Webhook Setup
+// Telegram Bot Webhook Setup
 // Telegram Bot Webhook Setup
 bot.on('message', async (msg) => {
     const chatId = msg.chat.id;
@@ -107,21 +75,37 @@ bot.on('message', async (msg) => {
     const firstName = msg.chat.first_name || '';
     const lastName = msg.chat.last_name || '';
 
-    // Add or update user details in Google Sheets
-    await addOrUpdateUserInGoogleSheet(chatId, username, firstName, lastName);
+    // Check if the user already has a thread ID in PocketBase
+    const existingRecords = await pb.collection('threads').getFullList({
+        filter: `telegram_chat_id="${chatId}"`
+    });
 
-    const thread = await openai.beta.threads.create();
-    
+    let threadId;
+    if (existingRecords.length > 0 && existingRecords[0].thread_id) {
+        // If a thread ID exists for this user, use it
+        threadId = existingRecords[0].thread_id;
+        console.log('Continuing conversation with thread ID:', threadId);
+    } else {
+        // Otherwise, create a new thread and store the ID
+        const thread = await openai.beta.threads.create();
+        threadId = thread.id;
+        console.log('Starting new conversation with thread ID:', threadId);
+    }
+
+    // Add or update user details in PocketBase, passing the thread ID
+    await addOrUpdateUserInPocketBase(chatId, username, firstName, lastName, text, threadId);
+
     // If user types /start, send a welcome message
     if (text === '/start') {
         bot.sendMessage(chatId, 'Welcome to the AI-powered chatbot! How can I assist you today?');
     } else {
         try {
-            const createMessage = await openai.beta.threads.messages.create(thread.id, {
+            // Send the user's message to the OpenAI assistant
+            const createMessage = await openai.beta.threads.messages.create(threadId, {
                 role: 'user',
                 content: text,
             });
-            const run = await openai.beta.threads.runs.createAndPoll(thread.id, {
+            const run = await openai.beta.threads.runs.createAndPoll(threadId, {
                 assistant_id: 'asst_5905oWhC2IYlpzp0dMDJicjX'
             });
 
@@ -143,7 +127,7 @@ bot.on('message', async (msg) => {
 
 // Express Server
 app.get('/', (req, res) => {
-    res.send('Telegram Chatbot with OpenAI is running...');
+    res.send('Telegram Chatbot with OpenAI and PocketBase is running...');
 });
 
 // Start the server

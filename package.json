@@ -17,6 +17,7 @@
     "googleapis": "^144.0.0",
     "node-fetch": "^3.3.2",
     "node-telegram-bot-api": "^0.66.0",
-    "openai": "^4.67.3"
+    "openai": "^4.67.3",
+    "pocketbase": "^0.21.5"
   }
 }
